@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Countdown</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle, #001122, #000000);
+            font-family: sans-serif;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            position: relative;
+        }
+        #title {
+            font-size: 3rem;
+            letter-spacing: 1rem;   margin-bottom: 5px;
+            text-align: center;
+        }
+        #title2 {
+            font-size: 5rem;
+            letter-spacing: 1rem;
+            text-align: center;
+        }
+        #number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 15rem;
+            text-shadow: 0 0 30px #fff, 0 0 60px #fff;
+            transition: text-shadow 0.3s;
+        }
+        .urgent {
+            text-shadow: 0 0 30px #f00, 0 0 60px #f00;
+        }
+        .flash {
+            animation: flash 1s infinite alternate;
+        }
+        @keyframes flash {
+            0% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        .pulse {
+            animation: pulse 0.2s;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #click-btn {
+            background: linear-gradient(to right, #fff, #ccc);
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 2rem;
+            color: #000;
+            box-shadow: 0 0 15px #fff;
+            margin-top: 60px;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+        }
+        #click-btn:hover {
+            box-shadow: 0 0 30px #fff;
+        }
+        #or-press {
+            font-size: 1.5rem;
+            margin-top: 15px;
+            text-align: center;
+        }
+        #grille {
+            margin-top: 30px;
+            width: 400px;
+            height: 100px;
+            max-width: 80vw;
+            max-height: 20vh;
+        }
+        #reset {
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            margin-top: 30px;
+            position: absolute;
+            bottom: 30px;
+        }
+        .flash-screen {
+            background: white !important;
+            animation: screen-flash 0.5s;
+        }
+        @keyframes screen-flash {
+            0% { background: radial-gradient(circle, #001122, #000000); }
+            50% { background: white; }
+            100% { background: radial-gradient(circle, #001122, #000000); }
+        }
+        @media (max-width: 768px) {
+            #title {
+                font-size: 2rem;
+                letter-spacing: 0.5rem;
+                margin-bottom: 20px;
+            }
+            #number {
+                font-size: 8rem;
+                text-shadow: 0 0 20px #fff, 0 0 40px #fff;
+            }
+            .urgent {
+                text-shadow: 0 0 20px #f00, 0 0 40px #f00;
+            }
+            #grille {
+                width: 200px;
+                height: 50px;
+                margin-top: 20px;
+            }
+            #click-btn {
+                font-size: 1.5rem;
+                padding: 12px 24px;
+                margin-top: 40px;
+            }
+            #or-press {
+                font-size: 1rem;
+                margin-top: 10px;
+            }
+            #reset {
+                font-size: 1rem;
+                margin-top: 20px;
+                bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="title">THE COUNTDOWN TO 2027</h1>
+        <h1 id="title2"></h1>
+        <div id="number">264</div>
+        <canvas id="grille" width="400" height="100"></canvas>
+        <button id="click-btn">CLICK</button>
+        <p id="or-press">OR PRESS SPACE</p>
+        <a href="#" id="reset">RESET</a>
+    </div>
+    <script>
+        function getDaysLeftInYear() {
+            const now = new Date();
+            const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+            const diffTime = endOfYear - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        let count = parseInt(localStorage.getItem('count')) || getDaysLeftInYear();
+        const numberEl = document.getElementById('number');
+        const bodyEl = document.body;
+        const clickBtn = document.getElementById('click-btn');
+        const resetLink = document.getElementById('reset');
+        const grilleCanvas = document.getElementById('grille');
+
+        function setCanvasSize() {
+            grilleCanvas.width = grilleCanvas.offsetWidth;
+            grilleCanvas.height = grilleCanvas.offsetHeight;
+            drawGrille();
+        }
+
+        function drawGrille() {
+            const ctx = grilleCanvas.getContext('2d');
+            ctx.clearRect(0, 0, grilleCanvas.width, grilleCanvas.height);
+            const spacing = grilleCanvas.width / 50;
+            const dotRadius = spacing / 2 - 0.5;
+            const cols = 50;
+            const rows = Math.floor(grilleCanvas.height / spacing);
+            let dotIndex = 0;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = c * spacing + spacing / 2;
+                    const y = r * spacing + spacing / 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, dotRadius, 0, 2 * Math.PI);
+                    ctx.fillStyle = dotIndex < count ? '#fff' : '#333';
+                    ctx.fill();
+                    dotIndex++;
+                }
+            }
+        }
+
+        function updateNumber() {
+            numberEl.textContent = count;
+            setCanvasSize();
+            if (count <= 0) {
+                bodyEl.classList.add('flash-screen');
+                setTimeout(() => {
+                    numberEl.textContent = 'COMPLETE';
+                }, 500);
+            } else {
+                if (count < 10) {
+                    numberEl.classList.add('flash');
+                } else {
+                    numberEl.classList.remove('flash');
+                }
+                if (count < 50) {
+                    numberEl.classList.add('urgent');
+                } else {
+                    numberEl.classList.remove('urgent');
+                }
+            }
+        }
+
+        function decrement() {
+            if (count > 0) {
+                count--;
+                localStorage.setItem('count', count);
+                updateNumber();
+                playSound();
+                numberEl.classList.add('pulse');
+                setTimeout(() => numberEl.classList.remove('pulse'), 200);
+            }
+        }
+
+        function playSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function reset() {
+            count = getDaysLeftInYear();
+            localStorage.setItem('count', count);
+            updateNumber();
+            bodyEl.classList.remove('flash-screen');
+            numberEl.classList.remove('flash', 'urgent');
+        }
+
+        clickBtn.addEventListener('click', decrement);
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                decrement();
+            }
+        });
+        resetLink.addEventListener('click', reset);
+        window.addEventListener('resize', setCanvasSize);
+
+        updateNumber();
+    </script>
+</body>
+</html>
